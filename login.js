@@ -261,15 +261,19 @@ async function handleVerification(page) {
             }
 
             // 5. Get Cookies
-            const cookies = await context.cookies();
-            const cookieStr = cookies.map(c => `${c.name}=${c.value}`).join('; ');
+            const allCookies = await context.cookies();
+            const turnstileCookie = allCookies.find(c => c.name === 'hc_cf_turnstile');
 
-            // Validate hc_cf_turnstile presence as requested by user
-            const turnstileCookie = cookies.find(c => c.name === 'hc_cf_turnstile');
+            let cookieStr = '';
             if (turnstileCookie) {
                 console.log(`✅ Extracted hc_cf_turnstile: ${turnstileCookie.value.substring(0, 15)}...`);
+                // STRICT MODE: Only export hc_cf_turnstile as requested
+                cookieStr = `hc_cf_turnstile=${turnstileCookie.value}`;
             } else {
                 console.warn('⚠️ WARNING: hc_cf_turnstile cookie NOT found! Renewal might fail.');
+                // Fallback: Use all hidencloud cookies if turnstile missing (or maybe just empty?)
+                // User requested ONLY turnstile, so if it's missing, we probably fail anyway.
+                // Let's keep it empty or try to grab what we can, but likely it's critical.
             }
 
             // 6. Export to Env
