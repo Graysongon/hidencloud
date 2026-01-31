@@ -84,9 +84,7 @@
 
 ### 1. 安装依赖
 
-```bash
-npm install axios cheerio
-```
+npm install
 
 ### 2. 准备 Cookie 文件
 
@@ -126,6 +124,24 @@ node local_renew.js
 ### 方法二：浏览器扩展
 
 使用 Cookie 导出扩展（如 EditThisCookie、Cookie-Editor）直接导出。
+
+### 方法三：Windows 自动获取（推荐）
+
+如果您是在 Windows 本地运行，可以使用提供的自动登录脚本来生成 Cookie。
+
+1. **准备账号文件**：在项目根目录创建 `users.json`，格式如下：
+   ```json
+   [
+     {"username": "你的邮箱", "password": "你的密码"},
+     {"username": "第二个账号", "password": "密码"}
+   ]
+   ```
+2. **运行登录脚本**：
+   ```bash
+   node win_login.js
+   ```
+   脚本会自动打开 Chrome 浏览器进行登录，通过验证后将 Cookie 保存到 `cookie.json`。
+3. **完成**：`cookie.json` 生成后，直接运行续期脚本即可。
 
 ## ⚙️ 配置说明
 

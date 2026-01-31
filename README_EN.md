@@ -22,7 +22,7 @@ An automated renewal script for HidenCloud services, supporting three deployment
 
 **Prerequisites:**
 - Node.js (v14 or higher recommended)
-- npm packages: `axios`, `cheerio`
+- npm packages: run `npm install`
 
 **Quick Start:**
 
@@ -87,6 +87,24 @@ See comments in file for details.
 ### Method 2: Browser Extension
 
 Use cookie export extensions like EditThisCookie or Cookie-Editor.
+
+### Method 3: Windows Auto Retrieval (Recommended)
+
+If you are running locally on Windows, you can use the provided auto-login script to generate cookies.
+
+1. **Prepare Account File**: Create `users.json` in the project root directory:
+   ```json
+   [
+     {"username": "your_email", "password": "your_password"},
+     {"username": "second_user", "password": "password"}
+   ]
+   ```
+2. **Run Login Script**:
+   ```bash
+   node win_login.js
+   ```
+   The script will launch Chrome, login, solve verification, and save cookies to `cookie.json`.
+3. **Done**: Once `cookie.json` is generated, proceed to run the renewal script.
 
 ## ⚙️ Configuration
 
