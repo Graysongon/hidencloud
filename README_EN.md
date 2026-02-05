@@ -59,6 +59,23 @@ Fully automated in the cloud, no local environment needed, automatic Cookie upda
    - Actions → Katabump Auto Renew New → Run workflow
    - Check run logs to confirm success
 
+### Telegram Notification (Optional)
+
+If you need notification for execution results, you can configure a Telegram Bot:
+
+1. **Get Credentials**:
+   - `TG_BOT_TOKEN`: Contact [@BotFather](https://t.me/BotFather) to create a bot and get the Token.
+   - `TG_CHAT_ID`: Contact [@userinfobot](https://t.me/userinfobot) to get your ID, or invite the bot to a group to get the group ID.
+
+2. **Add Secrets**:
+   - Add the following in Settings → Secrets and variables → Actions:
+     - Name: `TG_BOT_TOKEN`
+     - Secret: Your Bot Token
+     - Name: `TG_CHAT_ID`
+     - Secret: Your User ID or Group ID
+
+Once configured, a summary report will be sent to your Telegram after each execution.
+
 **Workflow Details:**
 
 - Auto-run: Triggers every 3 days automatically

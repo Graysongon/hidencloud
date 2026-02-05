@@ -29,6 +29,8 @@ jobs:
       - name: Run Action Script
         env:
           USERS_JSON: ${{ secrets.USERS_JSON }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
         run: xvfb-run --auto-servernum --server-args="-screen 0 1280x720x24" node action.js
       
       - name: Upload Screenshots (Debug)

@@ -59,6 +59,23 @@
    - Actions → Katabump Auto Renew New → Run workflow
    - 查看运行日志确认成功
 
+### Telegram 通知配置 (可选)
+
+如果需要任务执行结果通知，可以配置 Telegram Bot：
+
+1. **获取配置信息**：
+   - `TG_BOT_TOKEN`: 联系 [@BotFather](https://t.me/BotFather) 创建机器人获取 Token
+   - `TG_CHAT_ID`: 联系 [@userinfobot](https://t.me/userinfobot) 获取你的 ID，或邀请机器人入群获取群组 ID
+
+2. **添加 Secrets**：
+   - 同样在 Settings → Secrets and variables → Actions 中添加：
+     - Name: `TG_BOT_TOKEN`
+     - Secret: 你的 Bot Token
+     - Name: `TG_CHAT_ID`
+     - Secret: 你的 User ID 或 Group ID
+
+配置完成后，每次任务执行结束都会发送简要报告到你的 Telegram。
+
 **工作流说明：**
 
 - 自动运行：每 3 天自动触发

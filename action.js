@@ -77,13 +77,13 @@ function getUsers() {
         // Fallback for local testing
         const localUsersPath = path.join(__dirname, 'users.json');
         if (fs.existsSync(localUsersPath)) {
-            console.log('Loading users from local users.json file...');
+            console.log('正在从本地 users.json 文件加载用户...');
             const fileContent = fs.readFileSync(localUsersPath, 'utf8');
             const parsed = JSON.parse(fileContent);
             return Array.isArray(parsed) ? parsed : (parsed.users || []);
         }
     } catch (e) {
-        console.error('Error parsing USERS_JSON or users.json:', e);
+        console.error('解析 USERS_JSON 或 users.json 时出错:', e);
     }
     return [];
 }
@@ -147,7 +147,7 @@ class HidenCloudBot {
             result.finalUrl = result.url;
             return result;
         } catch (err) {
-            throw new Error(`Browser Fetch Error: ${err.message}`);
+            throw new Error(`浏览器请求错误: ${err.message}`);
         }
     }
 
@@ -170,7 +170,7 @@ class HidenCloudBot {
 
             const $ = cheerio.load(res.data);
             const title = $('title').text().trim();
-            this.log(`Debug: Page Title = "${title}"`);
+            this.log(`调试: 页面标题 = "${title}"`);
 
             if (title.includes('Just a moment') || title.includes('Attention Required')) {
                 this.log('⚠️ 依然检测到拦截页面，请检查 Turnstile');
@@ -331,11 +331,11 @@ function checkPort(port) {
 
 async function launchChrome() {
     if (await checkPort(DEBUG_PORT)) {
-        console.log('Chrome is already open.');
+        console.log('Chrome 已启动。');
         return;
     }
 
-    console.log(`Launching Chrome (Detached)...`);
+    console.log(`正在启动 Chrome (分离模式)...`);
     // Use OS temp directory for user data or specific tmp path
     const userDataDir = path.join(os.tmpdir(), 'chrome_user_data_' + Date.now());
 
@@ -359,14 +359,14 @@ async function launchChrome() {
     });
     chrome.unref();
 
-    console.log('Waiting for Chrome to initialize...');
+    console.log('正在等待 Chrome 初始化...');
     for (let i = 0; i < 20; i++) {
         if (await checkPort(DEBUG_PORT)) break;
         await new Promise(r => setTimeout(r, 1000));
     }
 
     if (!await checkPort(DEBUG_PORT)) {
-        throw new Error('Chrome launch failed');
+        throw new Error('Chrome 启动失败');
     }
 }
 
@@ -378,7 +378,7 @@ async function attemptTurnstileCdp(page) {
             const data = await frame.evaluate(() => window.__turnstile_data).catch(() => null);
 
             if (data) {
-                console.log('>> Found Turnstile in frame. Ratios:', data);
+                console.log('>> 在框架中发现 Turnstile。比例:', data);
                 const iframeElement = await frame.frameElement();
                 if (!iframeElement) continue;
 
@@ -404,7 +404,7 @@ async function attemptTurnstileCdp(page) {
                     button: 'left',
                     clickCount: 1
                 });
-                console.log('>> CDP Click sent.');
+                console.log('>> CDP 点击已发送。');
                 await client.detach();
                 return true;
             }
@@ -414,10 +414,10 @@ async function attemptTurnstileCdp(page) {
 }
 
 async function handleVerification(page) {
-    console.log('Checking for verification...');
+    console.log('正在检查验证...');
     for (let i = 0; i < 30; i++) {
         if (await page.getByRole('textbox', { name: 'Email or Username' }).isVisible()) {
-            console.log('Login form detected.');
+            console.log('检测到登录表单。');
             return;
         }
         await attemptTurnstileCdp(page);
@@ -429,19 +429,42 @@ async function handleVerification(page) {
 // Main Execution
 // ==========================================
 
+async function sendTelegramNotification(summaryText) {
+    const tgToken = process.env.TG_BOT_TOKEN;
+    const tgChatId = process.env.TG_CHAT_ID;
+
+    if (!tgToken || !tgChatId) {
+        console.log('⚠️ 未检测到 TG_BOT_TOKEN 或 TG_CHAT_ID，跳过 Telegram 通知。');
+        return;
+    }
+
+    console.log('📨 正在发送 Telegram 通知...');
+    try {
+        const url = `https://api.telegram.org/bot${tgToken}/sendMessage`;
+        await axios.post(url, {
+            chat_id: tgChatId,
+            text: summaryText,
+            parse_mode: 'Markdown'
+        });
+        console.log('✅ Telegram 通知发送成功');
+    } catch (e) {
+        console.error('❌ Telegram 通知发送失败:', e.message);
+    }
+}
+
 (async () => {
     const users = getUsers();
     if (users.length === 0) {
-        console.log('No users found in process.env.USERS_JSON or local users.json');
+        console.log('未在 process.env.USERS_JSON 或本地 users.json 中找到用户');
         process.exit(1);
     }
 
-    console.log(`🚀 Starting Action Script for ${users.length} users (Isolated Environments)...`);
+    console.log(`🚀 正在启动操作脚本，共 ${users.length} 个用户 (隔离环境)...`);
     const summary = [];
 
     for (let i = 0; i < users.length; i++) {
         const user = users[i];
-        console.log(`\n=== Processing User ${i + 1}: ${user.username} ===`);
+        console.log(`\n=== 正在处理用户 ${i + 1}: ${user.username} ===`);
 
         // 1. Prepare Isolated Environment
         let browser;
@@ -452,7 +475,7 @@ async function handleVerification(page) {
             // Launch specific Chrome for this user
             // We use the launchChrome logic but inlined or adapted to return the process
             if (await checkPort(DEBUG_PORT)) {
-                console.log('Warning: Chrome port seems busy. Attempting to kill orphan processes...');
+                console.log('警告: Chrome 端口似乎繁忙。正在尝试清理孤立进程...');
                 try {
                     // Simple kill attempt for Linux/CI
                     require('child_process').execSync(`pkill -f "remote-debugging-port=${DEBUG_PORT}" || true`);
@@ -460,7 +483,7 @@ async function handleVerification(page) {
                 } catch (e) { }
             }
 
-            console.log(`Launching Chrome (Isolated for ${user.username})...`);
+            console.log(`正在启动 Chrome (隔离用户 ${user.username})...`);
             const userDataDir = path.join(os.tmpdir(), `chrome_${Date.now()}_${i}`);
             const args = [
                 `--remote-debugging-port=${DEBUG_PORT}`,
@@ -481,7 +504,7 @@ async function handleVerification(page) {
             chromeProcess.unref();
 
             // Wait for Port
-            console.log('Waiting for Chrome...');
+            console.log('正在等待 Chrome...');
             let portReady = false;
             for (let k = 0; k < 20; k++) {
                 if (await checkPort(DEBUG_PORT)) {
@@ -490,10 +513,10 @@ async function handleVerification(page) {
                 }
                 await new Promise(r => setTimeout(r, 1000));
             }
-            if (!portReady) throw new Error('Chrome launch timeout');
+            if (!portReady) throw new Error('Chrome 启动超时');
 
             // Connect
-            console.log(`Connecting to Chrome...`);
+            console.log(`正在连接到 Chrome...`);
             browser = await chromium.connectOverCDP(`http://localhost:${DEBUG_PORT}`);
             const defaultContext = browser.contexts()[0];
             page = await defaultContext.newPage();
@@ -504,7 +527,7 @@ async function handleVerification(page) {
             let loginSuccess = false;
 
             // --- Part A: Login ---
-            console.log('--- Phase 1: Browser Login ---');
+            console.log('--- 第一阶段: 浏览器登录 ---');
             await page.goto('https://dash.hidencloud.com/auth/login');
             await handleVerification(page);
 
@@ -513,23 +536,23 @@ async function handleVerification(page) {
             await page.getByRole('textbox', { name: 'Password' }).click();
             await page.getByRole('textbox', { name: 'Password' }).fill(user.password);
 
-            console.log('Checking for second verification...');
+            console.log('正在检查二次验证...');
             for (let j = 0; j < 5; j++) {
                 if (await attemptTurnstileCdp(page)) await page.waitForTimeout(2000);
                 await page.waitForTimeout(500);
             }
 
-            console.log('Clicking Sign In...');
+            console.log('正在点击登录...');
             await page.getByRole('button', { name: 'Sign in to your account' }).click();
 
             try {
                 await page.waitForURL('**/dashboard', { timeout: 30000 });
-                console.log('Browser Login Successful!');
+                console.log('浏览器登录成功！');
                 loginSuccess = true;
             } catch (e) {
-                console.error('Wait for dashboard failed. Checking for errors...');
+                console.error('等待仪表盘失败。正在检查错误...');
                 if (await page.getByText('Incorrect password').isVisible()) {
-                    console.error('Login Failed: Incorrect password.');
+                    console.error('登录失败: 密码错误。');
                 } else {
                     await page.screenshot({ path: `login_failed_${i}.png` });
                 }
@@ -537,9 +560,9 @@ async function handleVerification(page) {
 
             // --- Part B: Renewal Logic ---
             if (loginSuccess) {
-                console.log('\n--- Phase 2: Renewal Operations (Browser Mode) ---');
+                console.log('\n--- 第二阶段: 续期操作 (浏览器模式) ---');
                 if (page.isClosed()) {
-                    console.error('Error: Page was closed unexpectedly.');
+                    console.error('错误: 页面意外关闭。');
                 } else {
                     const bot = new HidenCloudBot(page, user.username);
                     if (await bot.init()) {
@@ -556,11 +579,11 @@ async function handleVerification(page) {
             }
 
         } catch (err) {
-            console.error(`Error processing user ${user.username}: ${err.message}`);
+            console.error(`处理用户 ${user.username} 时出错: ${err.message}`);
             if (page) await page.screenshot({ path: `error_process_${i}.png` }).catch(() => { });
         } finally {
             // Cleanup Everything for this user
-            console.log('Cleaning up user environment...');
+            console.log('正在清理用户环境...');
             try { if (browser) await browser.close(); } catch (e) { }
 
             // Kill the chrome process we started
@@ -581,9 +604,15 @@ async function handleVerification(page) {
     console.log('\n\n╔════════════════════════════════════════════╗');
     console.log('║               Final Summary                ║');
     console.log('╚════════════════════════════════════════════╝');
+    let summaryText = `*HidenCloud 续期任务报告 (${new Date().toLocaleDateString()})*\n\n`;
+
     summary.forEach(s => {
-        console.log(`User: ${s.user} | Status: ${s.status} | Services: ${s.services}`);
+        const line = `User: ${s.user} | Status: ${s.status} | Services: ${s.services}`;
+        console.log(line);
+        summaryText += `👤 用户: \`${s.user}\`\n状态: ${s.status === 'Success' ? '✅ 成功' : '❌ 失败'}\n服务数: ${s.services}\n\n`;
     });
+
+    await sendTelegramNotification(summaryText);
 
     // Exit code based on success
     if (summary.some(s => s.status.includes('Failed'))) {
